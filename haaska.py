@@ -37,9 +37,14 @@ class HomeAssistant(object):
         agent_fmt = agent_str % (os.environ['AWS_DEFAULT_REGION'],
                                  requests.utils.default_user_agent())
         self.session = requests.Session()
-        self.session.headers = {'x-ha-access': config.password,
-                                'content-type': 'application/json',
+        self.session.headers = {'content-type': 'application/json',
                                 'User-Agent': agent_fmt}
+        
+        if self.config.token_auth:
+            self.session.headers['Authorization'] = 'Bearer ' + self.config.token
+        else:
+            self.session.headers['x-ha-access'] = self.config.password
+        
         self.session.verify = config.ssl_verify
         self.session.cert = config.ssl_client
 
@@ -81,7 +86,9 @@ class Configuration(object):
         opts['url'] = self.get(['url', 'ha_url'],
                                default='http://localhost:8123/api')
         opts['ssl_verify'] = self.get(['ssl_verify', 'ha_cert'], default=True)
+        opts['token_auth'] = self.get(['token_auth'], default=False)
         opts['password'] = self.get(['password', 'ha_passwd'], default='')
+        opts['token'] = self.get(['token'], default='')
         opts['ssl_client'] = self.get(['ssl_client'], default='')
         opts['debug'] = self.get(['debug'], default=False)
         self.opts = opts
